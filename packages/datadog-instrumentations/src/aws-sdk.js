@@ -198,11 +198,12 @@ function wrapSmithySend (send) {
     }
 
     return channels.start.runStores(ctx, () => {
-      // When the region is not set this never resolves so we can't await.
+      // When the region is not set this either never settles or rejects, depending on the SDK version, so we
+      // can't await it. The rejection is the application's to handle through `send()`, not ours to surface.
       this.config.region().then(region => {
         ctx.region = region
         channels.region.publish(ctx)
-      })
+      }, () => {})
 
       if (cbExists) {
         args[args.length - 1] = shimmer.wrapCallback(cb, cb => function (err, result) {
